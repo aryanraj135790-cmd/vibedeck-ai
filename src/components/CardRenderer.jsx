@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Sparkles, ChevronRight, RotateCcw } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useRunawayButton } from "../hooks/useRunawayButton";
+import { soundService } from "../services/soundService";
 
 export function CardRenderer({ deck, onReset }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -17,8 +18,10 @@ export function CardRenderer({ deck, onReset }) {
   );
 
   const celebrate = useMemo(
-    () => () =>
-      confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } }),
+    () => () => {
+      soundService.playSuccess();
+      confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } });
+    },
     [],
   );
 
@@ -27,6 +30,7 @@ export function CardRenderer({ deck, onReset }) {
       setIsComplete(true);
       celebrate();
     } else {
+      soundService.playFlip();
       setCurrentIndex((prev) => prev + 1);
     }
   };
@@ -36,7 +40,17 @@ export function CardRenderer({ deck, onReset }) {
     celebrate();
   };
 
-  // Full-deck completion celebration screen (replaces the blocking alert())
+  const handleOptionClick = () => {
+    soundService.playSuccess();
+    handleNext();
+  };
+
+  const handleResetClick = () => {
+    soundService.playFlip();
+    onReset();
+  };
+
+  // Full-deck completion celebration screen
   if (isComplete) {
     return (
       <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 text-center shadow-2xl flex flex-col items-center min-h-[440px] justify-between relative">
@@ -59,7 +73,7 @@ export function CardRenderer({ deck, onReset }) {
 
         <div className="w-full flex flex-col items-center gap-3">
           <button
-            onClick={onReset}
+            onClick={handleResetClick}
             className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 rounded-full font-semibold text-sm shadow-lg shadow-pink-500/30 transition-all"
           >
             Start a New Deck
@@ -68,7 +82,7 @@ export function CardRenderer({ deck, onReset }) {
 
         <div className="w-full flex justify-between items-center text-xs text-slate-500 pt-2 border-t border-white/10">
           <button
-            onClick={onReset}
+            onClick={handleResetClick}
             className="flex items-center gap-1 hover:text-slate-300 transition-colors"
           >
             <RotateCcw className="w-3 h-3" /> Create New
@@ -112,7 +126,7 @@ export function CardRenderer({ deck, onReset }) {
               ).map((option, idx) => (
                 <button
                   key={idx}
-                  onClick={handleNext}
+                  onClick={handleOptionClick}
                   className="w-full py-3 px-4 bg-white/5 border border-white/15 rounded-2xl text-sm font-medium hover:bg-pink-500/20 hover:border-pink-500/50 transition-all text-slate-200 text-left flex justify-between items-center group"
                 >
                   {option}
@@ -129,10 +143,11 @@ export function CardRenderer({ deck, onReset }) {
                 min="0"
                 max="100"
                 defaultValue="80"
+                onChange={() => soundService.playTick()}
                 className="w-full accent-pink-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
               />
               <button
-                onClick={handleNext}
+                onClick={handleOptionClick}
                 className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 rounded-full font-semibold text-sm shadow-lg shadow-pink-500/30 transition-all"
               >
                 Lock It In! 🎯
@@ -156,7 +171,7 @@ export function CardRenderer({ deck, onReset }) {
       {/* Deck Controls */}
       <div className="w-full flex justify-between items-center text-xs text-slate-500 pt-2 border-t border-white/10">
         <button
-          onClick={onReset}
+          onClick={handleResetClick}
           className="flex items-center gap-1 hover:text-slate-300 transition-colors"
         >
           <RotateCcw className="w-3 h-3" /> Create New
@@ -173,6 +188,16 @@ export function CardRenderer({ deck, onReset }) {
 function RevealCardContent({ subtitle, onComplete }) {
   const [revealed, setRevealed] = useState(false);
 
+  const handleClick = () => {
+    if (revealed) {
+      soundService.playFlip();
+      onComplete();
+    } else {
+      soundService.playSuccess();
+      setRevealed(true);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 items-center">
       {revealed ? (
@@ -183,7 +208,7 @@ function RevealCardContent({ subtitle, onComplete }) {
         <p className="text-slate-400 text-sm">Tap to reveal the secret ✨</p>
       )}
       <button
-        onClick={() => (revealed ? onComplete() : setRevealed(true))}
+        onClick={handleClick}
         className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 rounded-full font-semibold text-sm shadow-lg shadow-pink-500/30 transition-all"
       >
         {revealed ? "Continue ➜" : "Reveal ✨"}
@@ -198,6 +223,16 @@ function RunawayCardContent({ onSuccess }) {
   const { yesScale, noPosition, evasionCount, handleEvasion } =
     useRunawayButton(containerRef);
 
+  const onEvolveEvasion = (e) => {
+    soundService.playEvasion();
+    handleEvasion(e);
+  };
+
+  const handleYesClick = () => {
+    soundService.playSuccess();
+    onSuccess();
+  };
+
   return (
     <div
       ref={containerRef}
@@ -205,15 +240,15 @@ function RunawayCardContent({ onSuccess }) {
     >
       <button
         style={{ transform: `scale(${yesScale})` }}
-        onClick={onSuccess}
+        onClick={handleYesClick}
         className="z-20 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full font-semibold shadow-lg shadow-pink-500/30 transition-transform duration-200 hover:brightness-110 active:scale-95 text-sm"
       >
         YES! 💖
       </button>
 
       <button
-        onMouseEnter={handleEvasion}
-        onTouchStart={handleEvasion}
+        onMouseEnter={onEvolveEvasion}
+        onTouchStart={onEvolveEvasion}
         style={{
           transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
           transition: "transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)",

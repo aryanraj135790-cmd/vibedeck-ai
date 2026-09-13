@@ -1,57 +1,78 @@
-import { useRef } from "react";
-import { Heart, Sparkles } from "lucide-react";
-import { useRunawayButton } from "./hooks/useRunawayButton";
+import { useState } from "react";
+import { Wand2, Loader2 } from "lucide-react";
+import { generateDeckFromPrompt } from "./services/aiService";
+import { CardRenderer } from "./components/CardRenderer";
 
 export default function App() {
-  const containerRef = useRef(null);
-  const { yesScale, noPosition, evasionCount, handleEvasion } =
-    useRunawayButton(containerRef);
+  const [prompt, setPrompt] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [generatedDeck, setGeneratedDeck] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    if (!prompt.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const deckData = await generateDeckFromPrompt(prompt);
+      setGeneratedDeck(deckData);
+    } catch (err) {
+      setError(err.message || "Failed to generate deck.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-600/20 blur-3xl rounded-full pointer-events-none" />
 
-      <div
-        ref={containerRef}
-        className="relative z-10 w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 text-center shadow-2xl flex flex-col items-center min-h-105 justify-between"
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div className="p-3 bg-pink-500/20 rounded-2xl text-pink-400">
-            <Heart className="w-8 h-8 animate-pulse" />
+      <div className="relative z-10 w-full max-w-lg flex flex-col items-center gap-6">
+        {/* Input Form (hidden when playing a deck) */}
+        {!generatedDeck && (
+          <form
+            onSubmit={handleGenerate}
+            className="w-full flex gap-2 bg-white/10 backdrop-blur-xl border border-white/20 p-2 rounded-2xl shadow-xl"
+          >
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="e.g. Flirty coffee date invite for Sarah..."
+              className="flex-1 bg-transparent px-4 py-2 text-sm text-white focus:outline-none placeholder:text-slate-400"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !prompt.trim()}
+              className="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl font-medium text-sm flex items-center gap-2 hover:brightness-110 disabled:opacity-50 transition-all"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Wand2 className="w-4 h-4" />
+              )}
+              Generate Deck
+            </button>
+          </form>
+        )}
+
+        {error && (
+          <div className="w-full p-4 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs text-center">
+            {error}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Will you go on a romantic getaway with me?
-          </h1>
-          <p className="text-slate-400 text-sm">
-            Choose carefully... (Hint: You can't say no!)
-          </p>
-        </div>
+        )}
 
-        <div className="relative w-full h-32 flex items-center justify-center gap-4">
-          <button
-            style={{ transform: `scale(${yesScale})` }}
-            onClick={() => alert("Woohoo! Best decision ever! 💖")}
-            className="z-20 px-6 py-3 bg-linear-to-r from-pink-500 to-rose-500 rounded-full font-semibold shadow-lg shadow-pink-500/30 transition-transform duration-200 hover:brightness-110 active:scale-95"
-          >
-            YES! 💖
-          </button>
-
-          <button
-            onMouseEnter={handleEvasion}
-            onTouchStart={handleEvasion}
-            style={{
-              transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
-              transition: "transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)",
-            }}
-            className="z-10 px-6 py-3 bg-slate-800 border border-slate-700 rounded-full text-slate-300 font-medium hover:bg-slate-700 select-none"
-          >
-            {evasionCount > 3 ? "Nice try! 😉" : "No 💔"}
-          </button>
-        </div>
-
-        <div className="text-xs text-slate-500 flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-pink-400" /> Powered by VibeDeck AI
-        </div>
+        {/* Display Interactive Deck */}
+        {generatedDeck && (
+          <CardRenderer
+            deck={generatedDeck}
+            onReset={() => setGeneratedDeck(null)}
+          />
+        )}
       </div>
     </div>
   );

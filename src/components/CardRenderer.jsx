@@ -1,21 +1,20 @@
-import React, { useState, useMemo } from "react";
-import { Sparkles, ChevronRight, RotateCcw } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import {
+  Sparkles,
+  ChevronRight,
+  RotateCcw,
+  Link as LinkIcon,
+  Check,
+} from "lucide-react";
 import confetti from "canvas-confetti";
 import { useRunawayButton } from "../hooks/useRunawayButton";
 import { soundService } from "../services/soundService";
+import { shareService } from "../services/shareService";
 
 export function CardRenderer({ deck, onReset }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-
-  const currentCard = useMemo(
-    () => (isComplete ? null : deck.cards[currentIndex]),
-    [deck, currentIndex, isComplete],
-  );
-  const isLastCard = useMemo(
-    () => !isComplete && currentIndex === deck.cards.length - 1,
-    [deck.cards.length, currentIndex, isComplete],
-  );
+  const [copied, setCopied] = useState(false);
 
   const celebrate = useMemo(
     () => () => {
@@ -24,6 +23,14 @@ export function CardRenderer({ deck, onReset }) {
     },
     [],
   );
+
+  // Guard against empty/invalid decks after all hooks have been called.
+  if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) {
+    return <EmptyDeck onReset={onReset} />;
+  }
+
+  const currentCard = isComplete ? null : deck.cards[currentIndex];
+  const isLastCard = !isComplete && currentIndex === deck.cards.length - 1;
 
   const handleNext = () => {
     if (isLastCard) {
@@ -50,13 +57,29 @@ export function CardRenderer({ deck, onReset }) {
     onReset();
   };
 
-  // Full-deck completion celebration screen
+  const handleShare = async () => {
+    soundService.playFlip();
+    try {
+      const shareUrl = shareService.encodeDeckToUrl(deck);
+      const success = await shareService.copyToClipboard(shareUrl);
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        console.error("[CardRenderer] Failed to copy link to clipboard");
+      }
+    } catch (err) {
+      console.error("[CardRenderer] Share failed:", err);
+    }
+  };
+
+  // ---------- Completion Screen ----------
   if (isComplete) {
     return (
       <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 text-center shadow-2xl flex flex-col items-center min-h-[440px] justify-between relative">
         <div className="w-full flex justify-between items-center text-xs text-slate-400 font-medium">
           <span className="capitalize text-pink-400 font-semibold">
-            {deck.theme} Deck
+            {deck.theme || "Vibe"} Deck
           </span>
           <span>Complete ✓</span>
         </div>
@@ -73,8 +96,27 @@ export function CardRenderer({ deck, onReset }) {
 
         <div className="w-full flex flex-col items-center gap-3">
           <button
+            onClick={handleShare}
+            className={`w-full py-3 px-4 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+              copied
+                ? "bg-emerald-600 text-white"
+                : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg shadow-pink-500/25"
+            }`}
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" /> Link Copied!
+              </>
+            ) : (
+              <>
+                <LinkIcon className="w-4 h-4" /> Share This Deck
+              </>
+            )}
+          </button>
+
+          <button
             onClick={handleResetClick}
-            className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 rounded-full font-semibold text-sm shadow-lg shadow-pink-500/30 transition-all"
+            className="px-6 py-2.5 bg-white/5 border border-white/15 hover:bg-white/10 rounded-full font-semibold text-sm text-slate-200 transition-all"
           >
             Start a New Deck
           </button>
@@ -95,32 +137,42 @@ export function CardRenderer({ deck, onReset }) {
     );
   }
 
+  // ---------- Active Card Screen ----------
   return (
     <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 text-center shadow-2xl flex flex-col items-center min-h-[440px] justify-between relative">
-      {/* Progress Indicator */}
+      {/* Header */}
       <div className="w-full flex justify-between items-center text-xs text-slate-400 font-medium">
         <span className="capitalize text-pink-400 font-semibold">
-          {deck.theme} Deck
+          {deck.theme || "Vibe"} Deck
         </span>
         <span>
           Card {currentIndex + 1} of {deck.cards.length}
         </span>
       </div>
 
+      {/* Progress Bar */}
+      <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-2">
+        <div
+          className="bg-gradient-to-r from-pink-500 to-rose-500 h-full transition-all duration-300 ease-out"
+          style={{
+            width: `${((currentIndex + 1) / deck.cards.length) * 100}%`,
+          }}
+        />
+      </div>
+
       {/* Card Body */}
       <div className="my-auto w-full py-4 flex flex-col items-center gap-4">
         <h2 className="text-xl font-bold tracking-tight text-white">
-          {currentCard.question}
+          {currentCard.question || currentCard.title}
         </h2>
-        {currentCard.subtitle && (
+        {currentCard.subtitle && currentCard.type !== "reveal" && (
           <p className="text-slate-400 text-sm">{currentCard.subtitle}</p>
         )}
 
-        {/* Dynamic Card Type Switcher */}
         <div className="w-full mt-4">
           {currentCard.type === "multichoice" && (
             <div className="flex flex-col gap-2 w-full">
-              {(currentCard.options && currentCard.options.length > 0
+              {(currentCard.options?.length
                 ? currentCard.options
                 : ["Definitely YES! 🌟", "Count me in! 🎉", "Let's do it! 🚀"]
               ).map((option, idx) => (
@@ -143,12 +195,12 @@ export function CardRenderer({ deck, onReset }) {
                 min="0"
                 max="100"
                 defaultValue="80"
-                onChange={() => soundService.playTick()}
-                className="w-full accent-pink-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                onChange={() => soundService.playTick?.()}
+                className="w-full accent-pink-500 cursor-pointer h-2"
               />
               <button
                 onClick={handleOptionClick}
-                className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 rounded-full font-semibold text-sm shadow-lg shadow-pink-500/30 transition-all"
+                className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 rounded-full font-semibold text-sm text-white shadow-lg shadow-pink-500/30 transition-all"
               >
                 Lock It In! 🎯
               </button>
@@ -165,10 +217,39 @@ export function CardRenderer({ deck, onReset }) {
           {currentCard.type === "runaway" && (
             <RunawayCardContent onSuccess={handleRunawaySuccess} />
           )}
+
+          {/* Fallback for legacy {title, content, actionItem} cards */}
+          {!["multichoice", "slider", "reveal", "runaway"].includes(
+            currentCard.type,
+          ) && (
+            <div className="flex flex-col gap-4 text-left">
+              {currentCard.content && (
+                <p className="text-slate-300 leading-relaxed text-sm">
+                  {currentCard.content}
+                </p>
+              )}
+              {currentCard.actionItem && (
+                <div className="p-4 bg-pink-950/30 border border-pink-800/40 rounded-xl">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-pink-400 block mb-1">
+                    Action Item
+                  </span>
+                  <p className="text-sm text-pink-100">
+                    {currentCard.actionItem}
+                  </p>
+                </div>
+              )}
+              <button
+                onClick={handleOptionClick}
+                className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 rounded-2xl font-semibold text-sm text-white shadow-lg shadow-pink-500/25 transition-all"
+              >
+                {isLastCard ? "Finish ✨" : "Next ➜"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Deck Controls */}
+      {/* Footer */}
       <div className="w-full flex justify-between items-center text-xs text-slate-500 pt-2 border-t border-white/10">
         <button
           onClick={handleResetClick}
@@ -184,7 +265,22 @@ export function CardRenderer({ deck, onReset }) {
   );
 }
 
-// Reveal card: shows the secret when tapped, then advances the deck.
+// ---------- Empty / fallback state ----------
+function EmptyDeck({ onReset }) {
+  return (
+    <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 text-center shadow-2xl">
+      <p className="text-slate-400 text-sm mb-4">No deck loaded.</p>
+      <button
+        onClick={onReset}
+        className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 rounded-full font-semibold text-sm text-white shadow-lg shadow-pink-500/25 transition-all"
+      >
+        Create New Deck
+      </button>
+    </div>
+  );
+}
+
+// ---------- Reveal card ----------
 function RevealCardContent({ subtitle, onComplete }) {
   const [revealed, setRevealed] = useState(false);
 
@@ -209,7 +305,7 @@ function RevealCardContent({ subtitle, onComplete }) {
       )}
       <button
         onClick={handleClick}
-        className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 rounded-full font-semibold text-sm shadow-lg shadow-pink-500/30 transition-all"
+        className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 rounded-full font-semibold text-sm text-white shadow-lg shadow-pink-500/30 transition-all"
       >
         {revealed ? "Continue ➜" : "Reveal ✨"}
       </button>
@@ -217,14 +313,14 @@ function RevealCardContent({ subtitle, onComplete }) {
   );
 }
 
-// Sub-component encapsulating runaway behavior for specific cards
+// ---------- Runaway card ----------
 function RunawayCardContent({ onSuccess }) {
-  const containerRef = React.useRef(null);
+  const containerRef = useRef(null);
   const { yesScale, noPosition, evasionCount, handleEvasion } =
     useRunawayButton(containerRef);
 
   const onEvolveEvasion = (e) => {
-    soundService.playEvasion();
+    soundService.playEvasion?.();
     handleEvasion(e);
   };
 
@@ -241,7 +337,7 @@ function RunawayCardContent({ onSuccess }) {
       <button
         style={{ transform: `scale(${yesScale})` }}
         onClick={handleYesClick}
-        className="z-20 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full font-semibold shadow-lg shadow-pink-500/30 transition-transform duration-200 hover:brightness-110 active:scale-95 text-sm"
+        className="z-20 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full font-semibold text-white shadow-lg shadow-pink-500/30 transition-transform duration-200 hover:brightness-110 text-sm"
       >
         YES! 💖
       </button>
@@ -253,7 +349,7 @@ function RunawayCardContent({ onSuccess }) {
           transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
           transition: "transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)",
         }}
-        className="z-10 px-6 py-3 bg-slate-800 border border-slate-700 rounded-full text-slate-300 font-medium hover:bg-slate-700 select-none text-sm"
+        className="z-10 px-6 py-3 bg-white/5 border border-white/15 rounded-full text-slate-300 font-medium hover:bg-white/10 select-none text-sm"
       >
         {evasionCount > 3 ? "Nice try! 😉" : "No 💔"}
       </button>

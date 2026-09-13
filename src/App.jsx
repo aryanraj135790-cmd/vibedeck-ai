@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Volume2, VolumeX, Sparkles } from "lucide-react";
 import { soundService } from "./services/soundService";
+import { shareService } from "./services/shareService";
 import { CardRenderer } from "./components/CardRenderer";
 import { generateDeckFromPrompt } from "./services/aiService";
 
@@ -8,15 +9,20 @@ export default function App() {
   const [deck, setDeck] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isMuted, setIsMuted] = useState(
-    () => localStorage.getItem("vibedeck_muted") === "true",
-  );
+  const [isMuted, setIsMuted] = useState(false);
 
-  // Initialize mute state from localStorage / soundService on mount
+  // Read saved mute setting & decode shared URL deck on initial load
   useEffect(() => {
     const savedMute = localStorage.getItem("vibedeck_muted") === "true";
     if (savedMute) {
       soundService.toggleMute();
+      setIsMuted(true);
+    }
+
+    // Check if the URL contains a shared deck payload
+    const sharedDeck = shareService.decodeDeckFromUrl();
+    if (sharedDeck) {
+      setDeck(sharedDeck);
     }
   }, []);
 
@@ -35,6 +41,8 @@ export default function App() {
     try {
       const generatedDeck = await generateDeckFromPrompt(prompt);
       setDeck(generatedDeck);
+      // Clean up any lingering hash when generating a fresh deck
+      window.history.replaceState(null, "", window.location.pathname);
     } catch (err) {
       console.error("Failed to generate deck:", err);
     } finally {
@@ -42,9 +50,13 @@ export default function App() {
     }
   };
 
+  const handleReset = () => {
+    setDeck(null);
+    window.history.replaceState(null, "", window.location.pathname);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center p-4 relative overflow-hidden font-sans">
-      {/* Top Header */}
       <header className="w-full max-w-md flex justify-between items-center py-4 mb-6 z-10 border-b border-white/10">
         <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
           <Sparkles className="w-5 h-5 text-pink-400" />
@@ -53,7 +65,6 @@ export default function App() {
           </span>
         </div>
 
-        {/* Audio Toggle Button */}
         <button
           onClick={handleToggleAudio}
           aria-label={isMuted ? "Unmute Audio" : "Mute Audio"}
@@ -67,7 +78,6 @@ export default function App() {
         </button>
       </header>
 
-      {/* Main Content Area */}
       <main className="w-full max-w-md flex-1 flex flex-col items-center justify-center z-10">
         {!deck ? (
           <form
@@ -95,13 +105,13 @@ export default function App() {
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
-              className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 rounded-2xl font-semibold text-sm shadow-lg shadow-pink-500/25 transition-all"
+              className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 rounded-2xl font-semibold text-sm shadow-lg shadow-pink-500/25 transition-all text-white"
             >
               {loading ? "Generating Magic..." : "Generate Deck ✨"}
             </button>
           </form>
         ) : (
-          <CardRenderer deck={deck} onReset={() => setDeck(null)} />
+          <CardRenderer deck={deck} onReset={handleReset} />
         )}
       </main>
     </div>

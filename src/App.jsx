@@ -1,79 +1,109 @@
-import { useState } from "react";
-import { Wand2, Loader2 } from "lucide-react";
-import { generateDeckFromPrompt } from "./services/aiService";
+import { useState, useEffect } from "react";
+import { Volume2, VolumeX, Sparkles } from "lucide-react";
+import { soundService } from "./services/soundService";
 import { CardRenderer } from "./components/CardRenderer";
+import { generateDeckFromPrompt } from "./services/aiService";
 
 export default function App() {
+  const [deck, setDeck] = useState(null);
   const [prompt, setPrompt] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedDeck, setGeneratedDeck] = useState(null);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isMuted, setIsMuted] = useState(
+    () => localStorage.getItem("vibedeck_muted") === "true",
+  );
+
+  // Initialize mute state from localStorage / soundService on mount
+  useEffect(() => {
+    const savedMute = localStorage.getItem("vibedeck_muted") === "true";
+    if (savedMute) {
+      soundService.toggleMute();
+    }
+  }, []);
+
+  const handleToggleAudio = () => {
+    const nextState = soundService.toggleMute();
+    setIsMuted(nextState);
+    localStorage.setItem("vibedeck_muted", String(nextState));
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || loading) return;
 
-    setIsLoading(true);
-    setError(null);
-
+    soundService.playSuccess();
+    setLoading(true);
     try {
-      const deckData = await generateDeckFromPrompt(prompt);
-      setGeneratedDeck(deckData);
+      const generatedDeck = await generateDeckFromPrompt(prompt);
+      setDeck(generatedDeck);
     } catch (err) {
-      setError(err.message || "Failed to generate deck.");
+      console.error("Failed to generate deck:", err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-600/20 blur-3xl rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center p-4 relative overflow-hidden font-sans">
+      {/* Top Header */}
+      <header className="w-full max-w-md flex justify-between items-center py-4 mb-6 z-10 border-b border-white/10">
+        <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
+          <Sparkles className="w-5 h-5 text-pink-400" />
+          <span className="bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">
+            VibeDeck AI
+          </span>
+        </div>
 
-      <div className="relative z-10 w-full max-w-lg flex flex-col items-center gap-6">
-        {/* Input Form (hidden when playing a deck) */}
-        {!generatedDeck && (
+        {/* Audio Toggle Button */}
+        <button
+          onClick={handleToggleAudio}
+          aria-label={isMuted ? "Unmute Audio" : "Mute Audio"}
+          className="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white transition-all"
+        >
+          {isMuted ? (
+            <VolumeX className="w-4 h-4 text-rose-400" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-pink-400" />
+          )}
+        </button>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="w-full max-w-md flex-1 flex flex-col items-center justify-center z-10">
+        {!deck ? (
           <form
             onSubmit={handleGenerate}
-            className="w-full flex gap-2 bg-white/10 backdrop-blur-xl border border-white/20 p-2 rounded-2xl shadow-xl"
+            className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl flex flex-col gap-6"
           >
+            <div className="text-center flex flex-col gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">
+                Create Your Vibe Deck
+              </h1>
+              <p className="text-xs text-slate-400">
+                Enter any vibe, date idea, or challenge to build an interactive
+                deck.
+              </p>
+            </div>
+
             <input
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g. Flirty coffee date invite for Sarah..."
-              className="flex-1 bg-transparent px-4 py-2 text-sm text-white focus:outline-none placeholder:text-slate-400"
-              disabled={isLoading}
+              placeholder="e.g., Cyberpunk late night coffee run..."
+              className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:border-pink-500/50 transition-colors"
             />
+
             <button
               type="submit"
-              disabled={isLoading || !prompt.trim()}
-              className="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl font-medium text-sm flex items-center gap-2 hover:brightness-110 disabled:opacity-50 transition-all"
+              disabled={loading || !prompt.trim()}
+              className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 rounded-2xl font-semibold text-sm shadow-lg shadow-pink-500/25 transition-all"
             >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Wand2 className="w-4 h-4" />
-              )}
-              Generate Deck
+              {loading ? "Generating Magic..." : "Generate Deck ✨"}
             </button>
           </form>
+        ) : (
+          <CardRenderer deck={deck} onReset={() => setDeck(null)} />
         )}
-
-        {error && (
-          <div className="w-full p-4 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs text-center">
-            {error}
-          </div>
-        )}
-
-        {/* Display Interactive Deck */}
-        {generatedDeck && (
-          <CardRenderer
-            deck={generatedDeck}
-            onReset={() => setGeneratedDeck(null)}
-          />
-        )}
-      </div>
+      </main>
     </div>
   );
 }

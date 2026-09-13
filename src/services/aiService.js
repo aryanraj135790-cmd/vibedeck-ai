@@ -1,4 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
+import { THEME_IDS } from '../data/themes';
+import { BUTTON_TYPE_IDS } from '../data/buttonTypes';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -6,20 +8,21 @@ const deckSchema = {
   type: Type.OBJECT,
   properties: {
     title: { type: Type.STRING },
-    theme: { type: Type.STRING, enum: ["romantic", "playful", "sarcastic", "cyberpunk"] },
+    theme: { type: Type.STRING, enum: THEME_IDS },
     cards: {
       type: Type.ARRAY,
       items: {
         type: Type.OBJECT,
         properties: {
           id: { type: Type.STRING },
-          type: { type: Type.STRING, enum: ["multichoice", "slider", "runaway"] },
+          type: { type: Type.STRING, enum: BUTTON_TYPE_IDS },
           question: { type: Type.STRING },
           subtitle: { type: Type.STRING },
           options: {
             type: Type.ARRAY,
             items: { type: Type.STRING }
-          }
+          },
+          mediaUrl: { type: Type.STRING }
         },
         required: ["id", "type", "question"]
       }
@@ -36,38 +39,49 @@ function createDynamicFallbackDeck(prompt) {
   const capitalized = cleanPrompt.charAt(0).toUpperCase() + cleanPrompt.slice(1);
 
   // Detect theme based on keywords in prompt
-  let theme = "playful";
+  let theme = "romantic";
   const lower = prompt.toLowerCase();
-  if (lower.includes("romance") || lower.includes("date") || lower.includes("love") || lower.includes("anniversary")) {
-    theme = "romantic";
-  } else if (lower.includes("roast") || lower.includes("sarcastic") || lower.includes("funny")) {
-    theme = "sarcastic";
-  } else if (lower.includes("cyber") || lower.includes("sci-fi") || lower.includes("hack") || lower.includes("future")) {
+  if (lower.includes("cyber") || lower.includes("sci-fi") || lower.includes("hack") || lower.includes("future")) {
     theme = "cyberpunk";
+  } else if (lower.includes("sunset") || lower.includes("beach") || lower.includes("gold")) {
+    theme = "sunset";
+  } else if (lower.includes("emerald") || lower.includes("matrix") || lower.includes("green")) {
+    theme = "emerald";
+  } else if (lower.includes("midnight") || lower.includes("cosmic") || lower.includes("star")) {
+    theme = "midnight";
   }
 
   return {
     title: capitalized,
-    theme: theme,
+    theme,
     cards: [
       {
         id: "c1",
-        type: "multichoice",
-        question: `Let's talk about: ${cleanPrompt}. Where should we start?`,
-        subtitle: "Make your choice",
-        options: ["Option A: The bold approach", "Option B: The creative route", "Option C: Total chaos"]
+        type: "runaway",
+        question: `Are you ready to commit to ${cleanPrompt}?`,
+        subtitle: "Try clicking 'No' if you dare!",
+        options: ["YES! Let's go! ✨", "Nope 🙈"]
       },
       {
         id: "c2",
-        type: "slider",
-        question: `How intense is your excitement for ${cleanPrompt}?`,
-        subtitle: "Slide to lock in your vibe level"
+        type: "options",
+        question: `Let's talk about: ${cleanPrompt}. Where should we start?`,
+        subtitle: "Make your choice",
+        options: ["The bold approach", "The creative route", "Total chaos"]
       },
       {
         id: "c3",
-        type: "runaway",
-        question: `Are you ready to commit to ${cleanPrompt}?`,
-        subtitle: "Try clicking 'No' if you dare!"
+        type: "slider",
+        question: `How intense is your excitement for ${cleanPrompt}?`,
+        subtitle: "Slide to lock in your vibe level",
+        options: []
+      },
+      {
+        id: "c4",
+        type: "text",
+        question: "Leave a secret note ✉️",
+        subtitle: "One line they'll never forget...",
+        options: []
       }
     ]
   };
@@ -83,13 +97,13 @@ export async function generateDeckFromPrompt(userPrompt) {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
-      contents: `Generate a 3-card deck for: "${userPrompt}". Card 1: multichoice, Card 2: slider, Card 3: runaway.`,
+      contents: `Generate a 3-4 card interactive deck for: "${userPrompt}". Mix the interaction types to feel fresh (e.g. runaway, options, slider, voice, text, next) and pick a theme that fits the vibe. Include a mediaUrl (a giphy gif url) on at least one card.`,
       config: {
         systemInstruction: "Return ONLY raw JSON matching the schema. No markdown formatting outside json, no chat text.",
         responseMimeType: 'application/json',
         responseSchema: deckSchema,
-        temperature: 0.3,
-        maxOutputTokens: 1000,
+        temperature: 0.4,
+        maxOutputTokens: 1500,
       }
     });
 

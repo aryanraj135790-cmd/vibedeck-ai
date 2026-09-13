@@ -1,5 +1,7 @@
 import LZString from "lz-string";
 
+const DRAFT_KEY = "vibedeck_draft";
+
 export const shareService = {
   /**
    * Encodes a deck object into a URL-safe compressed hash string.
@@ -32,7 +34,6 @@ export const shareService = {
    * Copies text to the clipboard with modern API + legacy fallback.
    */
   async copyToClipboard(text) {
-    // Strategy 1: Modern Clipboard API
     if (navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(text);
@@ -41,8 +42,6 @@ export const shareService = {
         console.warn("[ShareService] Clipboard API failed, attempting fallback...", err);
       }
     }
-
-    // Strategy 2: ExecCommand fallback (works on HTTP & local dev servers)
     try {
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -52,7 +51,6 @@ export const shareService = {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-
       const successful = document.execCommand("copy");
       document.body.removeChild(textArea);
       return successful;
@@ -60,5 +58,34 @@ export const shareService = {
       console.error("[ShareService] Fallback copy failed:", err);
       return false;
     }
-  }
+  },
+
+  saveDraftToLocalStorage(deck) {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(deck));
+      return true;
+    } catch (err) {
+      console.error("[ShareService] Failed to save draft:", err);
+      return false;
+    }
+  },
+
+  loadDraftFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (err) {
+      console.error("[ShareService] Failed to load draft:", err);
+      return null;
+    }
+  },
+
+  clearDraftFromLocalStorage() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch (err) {
+      console.error("[ShareService] Failed to clear draft:", err);
+    }
+  },
 };

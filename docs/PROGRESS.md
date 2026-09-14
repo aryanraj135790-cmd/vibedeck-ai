@@ -30,7 +30,7 @@
 | Deploy/PWA | no vercel config, manifest, or SW verified | repo root |
 
 ## Todo (not started)
-- In-context chat tweaks (funnier/translate/retheme), tone switcher (5 tones).
+- Tone switcher + one-line chat tweak: 5 tones (playful / romantic / sarcastic / dramatic / minimal), `rewriteDeckCopy` in `aiService.js` (merges by card id, preserves type/id/mediaUrl/passcode), dedicated `AiRewriteBar.jsx` mounted below AiBar in `App.jsx` editor tab, `rewriting` + `handleRewrite` wired in `useApp.js`. Pre-selects playful for 1-click rewrite. Option count per card preserved.
 - Custom BGM MP3 / voice upload; persist recorded audio with deck (backend).
 - Video loops, AI images, Tenor/Giphy search.
 - Custom backgrounds/fonts/particle selector.

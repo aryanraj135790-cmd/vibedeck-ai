@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTheme } from "../data/themes";
 import { createDefaultDeck, normalizeDeck } from "../data/defaults";
 import { generateDeckFromPrompt } from "../services/aiService";
+import { rewriteDeckCopy } from "../services/aiService";
 import { shareService } from "../services/shareService";
 import { libraryService } from "../services/libraryService";
 import { soundService } from "../services/soundService";
@@ -17,6 +18,7 @@ export function useApp() {
   });
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rewriting, setRewriting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [savedUrl, setSavedUrl] = useState("");
@@ -128,6 +130,26 @@ export function useApp() {
     },
     [prompt, loading, showToast]
   );
+
+  const handleRewrite = useCallback(
+    async (deck, tone, tweak) => {
+      if (rewriting) return;
+      setRewriting(true);
+      try {
+        const rewritten = await rewriteDeckCopy(deck, tone, tweak || "");
+        setDeck(rewritten);
+        setEnvelopeKey((k) => k + 1);
+        showToast(`Rewritten in ${tone} tone.`);
+      } catch (err) {
+        console.error("AI rewrite failed:", err);
+        showToast("AI rewrite failed — deck kept as is.");
+      } finally {
+        setRewriting(false);
+      }
+    },
+    [rewriting, setDeck, showToast]
+  );
+
   return {
     activeTab,
     deck,
@@ -152,5 +174,6 @@ export function useApp() {
     handleLoadSaved,
     handlePlaySaved,
     handleGenerate,
+    handleRewrite,
   };
 }

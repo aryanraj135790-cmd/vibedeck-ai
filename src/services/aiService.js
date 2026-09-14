@@ -125,3 +125,113 @@ export async function generateDeckFromPrompt(userPrompt) {
     return createDynamicFallbackDeck(userPrompt);
   }
 }
+
+/**
+ * Rewrites a deck's card copy (question + subtitle + option wording) in a chosen
+ * tone of voice. Returns a NEW deck object; card ids, types, mediaUrls,
+ * passcodes and deck-level metadata are preserved. Only question/subtitle/options
+ * text change.
+ *
+ * tone: one of 'playful' | 'romantic' | 'sarcastic' | 'dramatic' | 'minimal'
+ * tweakPrompt: optional one-line instruction e.g. 'shorter', 'more puns', 'less cheesy'
+ */
+export async function rewriteDeckCopy(deck, tone, tweakPrompt) {
+  if (!apiKey) {
+    throw new Error("Missing VITE_GEMINI_API_KEY in your .env.local file.");
+  }
+
+  const TONE_NOTES = {
+    playful: "light, fun, breezy, emoji-friendly",
+    romantic: "warm, sincere, intimate, soft",
+    sarcastic: "dry, witty, slightly biting, self-aware, tongue-in-cheek",
+    dramatic: "bold, heightened, cinematic, urgent",
+    minimal: "short, clean, direct, spare — cut the fluff",
+  };
+
+  const toneNote = TONE_NOTES[tone] || TONE_NOTES.playful;
+  const tweakLine = tweakPrompt && tweakPrompt.trim()
+    ? `Additional instruction: "${tweakPrompt.trim()}".`
+    : "";
+
+  // Build per-card copy snapshots for the prompt
+  const cardSnapshots = deck.cards.map((c, i) =>
+    `Card ${i + 1} (id=${c.id}, type=${c.type}):
+  question: ${c.question || ""}
+  subtitle: ${c.subtitle || ""}
+  options: ${(c.options || []).join(" | ")}`
+  ).join("\n\n");
+
+  const prompt =
+    `You are a copywriter for an interactive celebration deck. Rewrite the copy on every card below so the whole deck sounds like ONE consistent voice: "${tone}" — ${toneNote}. ${tweakLine} Keep each question short (it's a card headline). Keep the same number of options per card and just rewrite each option's wording in the tone. Preserve all meaning — don't drop the ask. Return ONLY a JSON array of objects, one per card, each with { "id": "<same card id>", "question": "<rewritten>", "subtitle": "<rewritten>", "options": ["<rewritten>", ...] }. Do not change ids. Do not add or remove cards. No markdown, no text outside the JSON.
+
+Card copy to rewrite:
+${cardSnapshots}`;
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: "Return ONLY a raw JSON array matching the schema. No markdown fences, no text outside the JSON.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              question: { type: Type.STRING },
+              subtitle: { type: Type.STRING },
+              options: { type: Type.ARRAY, items: { type: Type.STRING } },
+            },
+            required: ["id", "question", "subtitle", "options"],
+          },
+        },
+        temperature: 0.6,
+        maxOutputTokens: 1200,
+      },
+    });
+
+    if (!response || !response.text) {
+      // Gemini returned nothing — keep deck unchanged
+      return deck;
+    }
+
+    let cleaned = response.text.trim();
+    if (cleaned.startsWith("```")) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    }
+
+    const rewritten = JSON.parse(cleaned);
+
+    if (!Array.isArray(rewritten)) {
+      console.warn("[AI Rewrite] unexpected non-array response, keeping deck unchanged");
+      return deck;
+    }
+
+    // Merge by id: rewrite question/subtitle/options only; keep everything else.
+    const idMap = new Map(rewritten.map((r) => [r.id, r]));
+    const newCards = deck.cards.map((c) => {
+      const r = idMap.get(c.id);
+      if (!r) return c; // no matching rewritten card → keep original
+      const opts = Array.isArray(r.options) && r.options.length > 0 ? r.options : c.options;
+      return {
+        ...c,
+        question: typeof r.question === "string" ? r.question : c.question,
+        subtitle: typeof r.subtitle === "string" ? r.subtitle : c.subtitle,
+        options: opts,
+      };
+    });
+
+    return {
+      ...deck,
+      cards: newCards,
+    };
+  } catch (error) {
+    console.warn("[AI Rewrite] API or parsing error, keeping deck unchanged:", error.message);
+    return deck;
+  }
+}
+

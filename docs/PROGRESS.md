@@ -1,7 +1,7 @@
 # VibeDeck AI — Progress Record
 
 > Source of truth: Master Plan v4.0 (`reference/VibeDeck AI - Master Plan, Feature Architecture & Business Strategy.docx`).
-> Last audited: 2026-09-15 · Branch `main` · Overall: **~69% complete**.
+> Last audited: 2026-09-15 · Branch `main` · Overall: **~71% complete**.
 
 ## Done (shipped on main)
 - Prompt-to-Deck via Gemini structured JSON (`src/services/aiService.js`, `AiBar.jsx`).
@@ -30,7 +30,6 @@
 | Deploy/PWA | no vercel config, manifest, or SW verified | repo root |
 
 ## Todo (not started)
-- Tone switcher + one-line chat tweak: 5 tones (playful / romantic / sarcastic / dramatic / minimal), `rewriteDeckCopy` in `aiService.js` (merges by card id, preserves type/id/mediaUrl/passcode), dedicated `AiRewriteBar.jsx` mounted below AiBar in `App.jsx` editor tab, `rewriting` + `handleRewrite` wired in `useApp.js`. Pre-selects playful for 1-click rewrite. Option count per card preserved.
 - Custom BGM MP3 / voice upload; persist recorded audio with deck (backend).
 - Video loops, AI images, Tenor/Giphy search.
 - Custom backgrounds/fonts/particle selector.
@@ -49,3 +48,4 @@
 - 2026-09-14: M1.2b Option B — dedicated passcode + passwordHint fields added (`PasswordEditor`, `StudioPreview` masked dots + LOCKED badge, `PasswordBody` reads new shape with options[0] fallback, aiService prompt+schema updated, normalize includes new fields); ~66%.
 - 2026-09-15: Card-only share links — only `cards[]` encoded in share URL; shared-link decode opens a chrome-free PlayView (no Header, no back link) with a tiny "Powered by VibeDeck AI" footer; `encodeDeckToUrl` strips all non-card fields before compressing; `useApp` shared-link decode now sets activeTab to `"view"` instead of `"preview"` (`services/shareService.js`, `src/hooks/useApp.js`, `src/App.jsx`, `src/components/player/PlayView.jsx`); ~68%.
 - 2026-09-15: Real QR in social card preview shipped via PR #8 (feature/real-qr → main, merge 81e785a); added `qrcode` dep; SocialExporter now draws scannable QR of the deck link (savedUrl with window.location.href fallback) on the 1200x630 PNG; removed duplicate QR import. Overall ~69%.
+- 2026-09-15: M1.4 Tone switcher + one-line chat tweak shipped on `feature/tone-switcher` (commit be1a3de); 5 tones (playful/romantic/sarcastic/dramatic/minimal) via standalone `AiRewriteBar.jsx` + `rewriteDeckCopy` in `aiService.js` (Gemini structured JSON, merges by card id, preserves type/id/mediaUrl/passcode/option count), `rewriting`+`handleRewrite` in `useApp.js`; playful pre-selected for 1-click rewrite. Lint + build pass. ~71%.

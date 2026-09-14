@@ -90,6 +90,7 @@ export default function App() {
               senderName={deckWithTheme.senderName}
               cards={deckWithTheme.cards}
               onToast={showToast}
+              deckUrl={savedUrl || window.location.href}
             />
           </div>
         )}

@@ -6,6 +6,7 @@ import {
   VoiceBody,
   TextBody,
   NextBody,
+  PasswordBody,
 } from "./InteractionBodies";
 
 export function InteractiveCard({ deck, theme, index, card, onAnswer, onRecorded }) {
@@ -46,6 +47,7 @@ export function InteractiveCard({ deck, theme, index, card, onAnswer, onRecorded
         {card.type === "slider" && <SliderBody onAnswer={onAnswer} />}
         {card.type === "voice" && <VoiceBody onAnswer={onAnswer} onRecorded={onRecorded} />}
         {card.type === "text" && <TextBody onAnswer={onAnswer} />}
+        {card.type === "password" && <PasswordBody card={card} onAnswer={onAnswer} />}
         {card.type === "next" && <NextBody onAnswer={onAnswer} />}
       </div>
     </div>

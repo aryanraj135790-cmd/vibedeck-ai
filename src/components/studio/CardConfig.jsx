@@ -74,7 +74,7 @@ export function CardConfig({ activeCard, selectedCardIdx, updateCurrentCard, the
           ))}
         </div>
       </div>
-      {(activeCard.type === "runaway" || activeCard.type === "options") && (
+      {(activeCard.type === "runaway" || activeCard.type === "options" || activeCard.type === "password") && (
         <OptionsEditor activeCard={activeCard} updateCurrentCard={updateCurrentCard} />
       )}
       <ThemePicker themeId={themeId} setDeck={setDeck} />

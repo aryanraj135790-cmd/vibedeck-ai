@@ -1,11 +1,12 @@
+import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 
-export function SocialExporter({ recipientName, senderName, cards, onToast }) {
+export function SocialExporter({ recipientName, senderName, cards, onToast, deckUrl }) {
   const canvasRef = useRef(null);
   const [socialImageUri, setSocialImageUri] = useState("");
 
-  const generate = () => {
+  const generate = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -67,16 +68,26 @@ export function SocialExporter({ recipientName, senderName, cards, onToast }) {
     ctx.fillText(`Includes ${cards.length} cards with Sound & 3D`, 130, 475);
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.roundRect(820, 330, 180, 180, 20);
+    ctx.roundRect(820, 330, 180, 180, 16);
     ctx.fill();
-    ctx.fillStyle = "#0f172a";
-    ctx.font = "bold 16px monospace";
-    ctx.fillText("SCAN TO OPEN", 840, 360);
-    for (let r = 0; r < 6; r++) {
-      for (let c = 0; c < 6; c++) {
-        if ((r + c) % 2 === 0) ctx.fillRect(840 + c * 24, 380 + r * 20, 18, 16);
-      }
+
+    try {
+      const qrCanvas = document.createElement("canvas");
+      qrCanvas.width = 150;
+      qrCanvas.height = 150;
+      await QRCode.toCanvas(qrCanvas, deckUrl || window.location.href, { width: 150, margin: 1, color: { dark: "#0f172a", light: "#ffffff" } });
+      ctx.save();
+      ctx.clearRect(835, 345, 150, 150);
+      ctx.drawImage(qrCanvas, 835, 345, 150, 150);
+      ctx.restore();
+    } catch (err) {
+      console.error("[SocialExporter] QR code generation failed:", err);
+      onToast("Failed to generate QR code. Try again later.");
     }
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "14px monospace";
+    ctx.fillText("Scan to play ✨", 910, 528);
     try {
       setSocialImageUri(canvas.toDataURL("image/png"));
     } catch {

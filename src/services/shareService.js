@@ -7,7 +7,9 @@ export const shareService = {
    * Encodes a deck object into a URL-safe compressed hash string.
    */
   encodeDeckToUrl(deck) {
-    const jsonString = JSON.stringify(deck);
+    // Share only the cards. No title, theme, sender, recipient, or phone.
+    const cardOnly = { cards: Array.isArray(deck?.cards) ? deck.cards : [] };
+    const jsonString = JSON.stringify(cardOnly);
     const compressed = LZString.compressToEncodedURIComponent(jsonString);
     return `${window.location.origin}${window.location.pathname}#deck=${compressed}`;
   },

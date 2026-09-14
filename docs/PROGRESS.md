@@ -1,7 +1,7 @@
 # VibeDeck AI — Progress Record
 
 > Source of truth: Master Plan v4.0 (`reference/VibeDeck AI - Master Plan, Feature Architecture & Business Strategy.docx`).
-> Last audited: 2026-09-14 · Branch `feature/password-card` · Overall: **~66% complete**.
+> Last audited: 2026-09-15 · Branch `main` · Overall: **~68% complete**.
 
 ## Done (shipped on main)
 - Prompt-to-Deck via Gemini structured JSON (`src/services/aiService.js`, `AiBar.jsx`).
@@ -18,6 +18,7 @@
 - Social exporter 1200x630 + PNG download (`studio/SocialExporter.jsx`) — QR is placeholder.
 - Local Saved Decks library: save/rename/duplicate/play/delete (`services/libraryService.js`, `studio/SavedDecks.jsx`).
 - lz-string `#deck=` share links + clipboard fallback + 60s banner (`services/shareService.js`).
+- Card-only share links: `encodeDeckToUrl` strips title/theme/sender/recipient/phone — only `cards[]` compressed; shared-link decode enters `"view"` tab (no Header); recipient gets chrome-free PlayView with tiny "Powered by VibeDeck AI" footer (`services/shareService.js`, `useApp.js`, `App.jsx`, `components/player/PlayView.jsx`).
 - Studio editor: add/remove/reorder cards, per-card config, StudioPreview (`studio/*`).
 - Responsive header, SVG favicon, meta title, custom scrollbars, cursor-pointer rule.
 
@@ -46,3 +47,5 @@
 
 - 2026-09-14: M1.2a Secret Password Box card type shipped (code+clue+unlock); password type added to schema, editor, preview; ~66%.
 - 2026-09-14: M1.2b Option B — dedicated passcode + passwordHint fields added (`PasswordEditor`, `StudioPreview` masked dots + LOCKED badge, `PasswordBody` reads new shape with options[0] fallback, aiService prompt+schema updated, normalize includes new fields); ~66%.
+- 2026-09-14: M1.2b Option B — dedicated passcode + passwordHint fields added (`PasswordEditor`, `StudioPreview` masked dots + LOCKED badge, `PasswordBody` reads new shape with options[0] fallback, aiService prompt+schema updated, normalize includes new fields); ~66%.
+- 2026-09-15: Card-only share links — only `cards[]` encoded in share URL; shared-link decode opens a chrome-free PlayView (no Header, no back link) with a tiny "Powered by VibeDeck AI" footer; `encodeDeckToUrl` strips all non-card fields before compressing; `useApp` shared-link decode now sets activeTab to `"view"` instead of `"preview"` (`services/shareService.js`, `src/hooks/useApp.js`, `src/App.jsx`, `src/components/player/PlayView.jsx`); ~68%.

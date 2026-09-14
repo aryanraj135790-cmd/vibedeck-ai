@@ -50,7 +50,7 @@ export function useApp() {
     Promise.resolve().then(() => {
       try {
         setDeck(normalizeDeck(shared));
-        setActiveTab("preview");
+        setActiveTab("view");
         setEnvelopeKey((k) => k + 1);
         showToast("Deck loaded from share link.");
       } catch {
@@ -116,7 +116,7 @@ export function useApp() {
         const generated = await generateDeckFromPrompt(prompt);
         setDeck(normalizeDeck(generated));
         setEnvelopeKey((k) => k + 1);
-        setActiveTab("preview");
+        setActiveTab("view");
         window.history.replaceState(null, "", window.location.pathname);
         showToast("AI deck generated — test play it.");
       } catch (err) {

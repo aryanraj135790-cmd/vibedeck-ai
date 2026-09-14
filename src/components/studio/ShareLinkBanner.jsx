@@ -29,10 +29,10 @@ export function ShareLinkBanner({ savedUrl, onToast }) {
   return (
     <div className="w-full bg-gradient-to-r from-cyan-600/20 via-pink-600/20 to-purple-600/20 border border-cyan-500/40 rounded-3xl p-5 shadow-2xl backdrop-blur-xl space-y-3 animate-[fadeIn_0.4s_ease]">
       <div className="flex items-center justify-between">
-        <span className="flex items-center space-x-2 text-xs font-mono font-bold text-cyan-300">
+        <div className="flex items-center space-x-2">
           <Zap className="w-4 h-4 text-pink-400 animate-pulse" />
-          <span>Deck Share Link Active</span>
-        </span>
+          <span className="text-xs font-mono font-bold text-cyan-300">Card-Only Share Link Active</span>
+        </div>
         <button
           onClick={() => setVisible(false)}
           className="text-[10px] text-slate-400 hover:text-white underline underline-offset-2"
@@ -40,6 +40,9 @@ export function ShareLinkBanner({ savedUrl, onToast }) {
           dismiss
         </button>
       </div>
+      <p className="text-[10px] text-slate-400 ml-0.5">
+        This link shares only the deck cards — no name, contact info, title, or theme.
+      </p>
       <div className="flex items-center gap-2">
         <input
           type="text"

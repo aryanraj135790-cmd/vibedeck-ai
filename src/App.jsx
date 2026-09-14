@@ -7,6 +7,7 @@ import { SocialExporter } from "./components/studio/SocialExporter";
 import { SavedDecks } from "./components/studio/SavedDecks";
 import { ShareLinkBanner } from "./components/studio/ShareLinkBanner";
 import { CardRenderer } from "./components/player/CardRenderer";
+import { PlayView } from "./components/player/PlayView";
 import { useApp } from "./hooks/useApp";
 
 export default function App() {
@@ -40,15 +41,17 @@ export default function App() {
       <CanvasParticles />
       <CanvasConfettiBurst trigger={burst} />
       <Toast message={toastMessage} />
-      <Header
-        activeTab={activeTab}
-        onTab={handleTab}
-        muted={muted}
-        onToggleMute={toggleMute}
-        savedUrl={savedUrl}
-        saving={saving}
-        onSave={handleSaveShare}
-      />
+      {activeTab !== "view" && (
+        <Header
+          activeTab={activeTab}
+          onTab={handleTab}
+          muted={muted}
+          onToggleMute={toggleMute}
+          savedUrl={savedUrl}
+          saving={saving}
+          onSave={handleSaveShare}
+        />
+      )}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
         {activeTab === "editor" && (
           <div className="flex flex-col gap-6 animate-[fadeIn_0.35s_ease]">
@@ -62,11 +65,20 @@ export default function App() {
             />
           </div>
         )}
-        {(activeTab === "preview" || activeTab === "view") && (
+        {activeTab === "preview" && (
           <CardRenderer
             key={envelopeKey}
             deck={deckWithTheme}
             theme={theme}
+            onToast={showToast}
+            onBurst={setBurst}
+          />
+        )}
+        {activeTab === "view" && (
+          <PlayView
+            deck={deckWithTheme}
+            theme={theme}
+            envelopeKey={envelopeKey}
             onToast={showToast}
             onBurst={setBurst}
           />

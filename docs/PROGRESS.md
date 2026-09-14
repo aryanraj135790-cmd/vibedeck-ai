@@ -6,7 +6,7 @@
 ## Done (shipped on main)
 - Prompt-to-Deck via Gemini structured JSON (`src/services/aiService.js`, `AiBar.jsx`).
 - 6 interaction types: runaway / options / slider / text / next (`player/InteractionBodies.jsx`, `useRunawayButton.js`).
-- 7th type — Secret Password Box: locked card until code matches (case-insensitive), clue = subtitle, code = options[0]; empty code = accept any; wrong-code error UX; unlock animation (`player/InteractionBodies.jsx` `PasswordBody`, `data/buttonTypes.js`, `aiService.js` schema+prompt).
+- 7th type — Secret Password Box: locked card until code matches (case-insensitive); user sets passcode + hint via dedicated editor, preview shows masked dots + LOCKED badge; empty passcode = accept any; wrong-code error UX; unlock animation (`player/InteractionBodies.jsx` `PasswordBody`, `studio/CardConfig.jsx` `PasswordEditor`, `studio/StudioPreview.jsx`, `data/defaults.js` normalize, `aiService.js` schema+prompt).
 - Real voice note recording: MediaRecorder + mic permission UX (denied/no-device/error states), 60s countdown, cleanup-on-unmount (no dangling mic), audio playback + fallback simulation (`player/InteractionBodies.jsx` `VoiceBody`).
 - CI pipeline: GitHub Actions lint+build gate on PR/push to main (`.github/workflows/ci.yml`).
 - Working agreement doc: branch/commit/PR/deploy/rollback rules (`docs/WORKING-AGREEMENT.md`).
@@ -44,4 +44,5 @@
 - 2026-09-14: audit vs plan v4.0 - PROGRESS.md + PLAN.md created (~60%).
 - 2026-09-14: CI pipeline + WORKING-AGREEMENT.md added; real voice recorder shipped (MediaRecorder, permission UX, cleanup-on-unmount); ~63%.
 
-- 2026-09-14: M1.2 Secret Password Box card type shipped (code+clue+unlock); password type added to schema, editor, preview; ~66%.
+- 2026-09-14: M1.2a Secret Password Box card type shipped (code+clue+unlock); password type added to schema, editor, preview; ~66%.
+- 2026-09-14: M1.2b Option B — dedicated passcode + passwordHint fields added (`PasswordEditor`, `StudioPreview` masked dots + LOCKED badge, `PasswordBody` reads new shape with options[0] fallback, aiService prompt+schema updated, normalize includes new fields); ~66%.

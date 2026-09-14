@@ -10,16 +10,13 @@ export function Header({ activeTab, onTab, muted, onToggleMute, savedUrl, saving
 
   return (
     <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2 flex-wrap">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
         <div className="flex items-center space-x-2 cursor-pointer shrink-0" onClick={() => onTab("editor")}>
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
             <Layers className="w-4 h-4 text-white animate-pulse" />
           </div>
-          <span className="font-black text-sm leading-none bg-gradient-to-r from-pink-400 via-rose-300 to-cyan-400 bg-clip-text text-transparent hidden sm:inline">
-            VibeDeck 3D
-          </span>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 order-last sm:order-none w-full sm:w-auto overflow-x-auto nice-scroll">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto nice-scroll">
           <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 backdrop-blur-sm shrink-0">
             {tabs.map((t) => (
               <button

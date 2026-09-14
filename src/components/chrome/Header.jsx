@@ -15,7 +15,7 @@ export function Header({ activeTab, onTab, muted, onToggleMute, savedUrl, saving
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
             <Layers className="w-4 h-4 text-white animate-pulse" />
           </div>
-          <span className="font-black text-sm leading-none bg-gradient-to-r from-pink-400 via-rose-300 to-cyan-400 bg-clip-text text-transparent">
+          <span className="font-black text-sm leading-none bg-gradient-to-r from-pink-400 via-rose-300 to-cyan-400 bg-clip-text text-transparent hidden sm:inline">
             VibeDeck 3D
           </span>
         </div>

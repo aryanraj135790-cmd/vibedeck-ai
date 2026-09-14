@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, ArrowRight } from "lucide-react";
 import { useRunawayButton } from "../../hooks/useRunawayButton";
 import { soundService } from "../../services/soundService";
@@ -74,35 +74,141 @@ export function SliderBody({ onAnswer }) {
 }
 
 export function VoiceBody({ onAnswer, onRecorded }) {
-  const [recording, setRecording] = useState(false);
-  const [done, setDone] = useState(false);
+  const [phase, setPhase] = useState("idle");
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [seconds, setSeconds] = useState(0);
+  const recorderRef = useRef(null);
+  const streamRef = useRef(null);
+  const chunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const urlRef = useRef(null);
+
+  const releaseResources = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      try {
+        recorderRef.current.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    recorderRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      releaseResources();
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current);
+        urlRef.current = null;
+      }
+    };
+  }, []);
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
+      setPhase("unsupported");
+      soundService.playCyberBeep();
+      return;
+    }
+    setPhase("requesting");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+        const url = URL.createObjectURL(blob);
+        urlRef.current = url;
+        setAudioUrl(url);
+        setPhase("recorded");
+        soundService.playSuccess();
+        onRecorded();
+      };
+      recorder.start();
+      setSeconds(0);
+      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+      setPhase("recording");
+      soundService.playCyberBeep();
+    } catch (err) {
+      releaseResources();
+      if (err && err.name === "NotAllowedError") setPhase("denied");
+      else if (err && err.name === "NotFoundError") setPhase("no-device");
+      else setPhase("error");
+      soundService.playCyberBeep();
+    }
+  };
+
+  const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      recorderRef.current.stop();
+    } else {
+      releaseResources();
+    }
+  };
+
   return (
     <div className="bg-slate-950/50 backdrop-blur-md p-4 rounded-2xl border border-white/20 space-y-3 text-center">
-      <button
-        onClick={() => {
-          if (recording) {
-            soundService.playSuccess();
-            setDone(true);
-            onRecorded();
-          } else {
-            soundService.playCyberBeep();
-          }
-          setRecording((r) => !r);
-        }}
-        className={`w-full font-bold py-2.5 px-4 rounded-xl border transition text-xs flex items-center justify-center space-x-2 ${
-          recording ? "bg-rose-600 text-white border-rose-400 animate-pulse" : "bg-pink-600/40 text-white border-pink-400/50"
-        }`}
-      >
-        {recording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-        <span>{recording ? "Stop Voice Recording..." : "Tap & Speak Voice Note"}</span>
-      </button>
-      {done && (
+      {(phase === "idle" || phase === "unsupported" || phase === "denied" || phase === "no-device" || phase === "error") && (
         <button
-          onClick={() => onAnswer("Voice Note Recorded 🎙️")}
-          className="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs shadow-md"
+          onClick={startRecording}
+          className="w-full font-bold py-2.5 px-4 rounded-xl border transition text-xs flex items-center justify-center space-x-2 bg-pink-600/40 text-white border-pink-400/50"
         >
-          Attach Voice Note & Proceed ➔
+          <Mic className="w-4 h-4" />
+          <span>Tap & Speak Voice Note</span>
         </button>
+      )}
+      {phase === "requesting" && (
+        <p className="text-xs text-slate-400">Waiting for microphone permission...</p>
+      )}
+      {phase === "recording" && (
+        <button
+          onClick={stopRecording}
+          className="w-full font-bold py-2.5 px-4 rounded-xl border transition text-xs flex items-center justify-center space-x-2 bg-rose-600 text-white border-rose-400 animate-pulse"
+        >
+          <MicOff className="w-4 h-4" />
+          <span>Stop Voice Recording... ({seconds}s)</span>
+        </button>
+      )}
+      {phase === "recorded" && audioUrl && (
+        <div className="space-y-2">
+          <audio src={audioUrl} controls className="w-full h-9" />
+          <button
+            onClick={() => onAnswer("Voice Note Recorded 🎙️")}
+            className="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs shadow-md"
+          >
+            Attach Voice Note & Proceed ➔
+          </button>
+        </div>
+      )}
+      {phase === "denied" && (
+        <p className="text-[11px] text-rose-300">Mic blocked — allow microphone access and retry, or continue without audio.</p>
+      )}
+      {phase === "no-device" && (
+        <p className="text-[11px] text-rose-300">No microphone found on this device — continue with text instead.</p>
+      )}
+      {phase === "error" && (
+        <p className="text-[11px] text-rose-300">Recording failed — please retry or continue without audio.</p>
+      )}
+      {phase === "unsupported" && (
+        <p className="text-[11px] text-slate-400">Voice capture is not supported in this browser — simulation mode.</p>
       )}
     </div>
   );

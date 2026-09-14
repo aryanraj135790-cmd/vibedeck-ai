@@ -251,7 +251,10 @@ export function PasswordBody({ card, onAnswer }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
-  const passcode = String(card.options?.[0] || "").trim();
+
+  // New dedicated shape preferred; falls back to options[0] for legacy decks.
+  const passcode = String(card.passcode || card.options?.[0] || "").trim();
+  const hint = card.passwordHint || card.subtitle || "";
 
   const attempt = () => {
     // No passcode configured = card creator left it open; accept any entry.
@@ -282,6 +285,11 @@ export function PasswordBody({ card, onAnswer }) {
       ) : (
         <div className="space-y-2">
           <Lock className={`w-8 h-8 mx-auto ${error ? "text-rose-400 animate-bounce" : "text-pink-400"}`} />
+          {hint && (
+            <p className="text-[11px] text-pink-200/80 italic">
+              {hint}
+            </p>
+          )}
           <input
             type="text"
             value={code}

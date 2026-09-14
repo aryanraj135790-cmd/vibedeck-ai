@@ -3,6 +3,54 @@ import { MediaPicker } from "./MediaPicker";
 import { OptionsEditor } from "./OptionsEditor";
 import { ThemePicker } from "./ThemePicker";
 
+function PasswordEditor({ activeCard, updateCurrentCard }) {
+  const passcode = activeCard.passcode || "";
+  const hint = activeCard.passwordHint || "";
+
+  return (
+    <div className="space-y-3 pt-2 border-t border-slate-800">
+      <div className="flex justify-between items-center">
+        <span className="text-xs font-bold text-slate-300">Secret Passcode</span>
+        <span className="text-[10px] text-slate-500 font-mono">
+          {passcode ? `${"•".repeat(Math.min(passcode.length, 6))} ${passcode.length > 6 ? "…" : ""}` : "(not set)"}
+        </span>
+      </div>
+      <div>
+        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+          Passcode (the code they type to unlock)
+        </label>
+        <input
+          type="text"
+          value={passcode}
+          onChange={(e) => updateCurrentCard("passcode", e.target.value)}
+          placeholder="e.g. midnight, ourdate2025, insidejoke"
+          maxLength={40}
+          className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 font-mono"
+        />
+        <p className="text-[10px] text-slate-500 mt-1">
+          Leave empty to leave the card open — anyone can pass.
+        </p>
+      </div>
+      <div>
+        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+          Hint / Clue (shown above the input to the recipient)
+        </label>
+        <input
+          type="text"
+          value={hint}
+          onChange={(e) => updateCurrentCard("passwordHint", e.target.value)}
+          placeholder="e.g. Think of the theme, our first date, etc."
+          maxLength={120}
+          className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20"
+        />
+        <p className="text-[10px] text-slate-500 mt-1">
+          Falls back to the card Subtitle if left blank.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function CardConfig({ activeCard, selectedCardIdx, updateCurrentCard, themeId, setDeck }) {
   return (
     <div className="space-y-4">
@@ -74,8 +122,12 @@ export function CardConfig({ activeCard, selectedCardIdx, updateCurrentCard, the
           ))}
         </div>
       </div>
-      {(activeCard.type === "runaway" || activeCard.type === "options" || activeCard.type === "password") && (
-        <OptionsEditor activeCard={activeCard} updateCurrentCard={updateCurrentCard} />
+      {activeCard.type === "password" ? (
+        <PasswordEditor activeCard={activeCard} updateCurrentCard={updateCurrentCard} />
+      ) : (
+        (activeCard.type === "runaway" || activeCard.type === "options") && (
+          <OptionsEditor activeCard={activeCard} updateCurrentCard={updateCurrentCard} />
+        )
       )}
       <ThemePicker themeId={themeId} setDeck={setDeck} />
     </div>

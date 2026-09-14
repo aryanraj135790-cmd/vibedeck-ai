@@ -83,11 +83,20 @@ export function StudioPreview({ deck, cards, selectedCardIdx, onPreview }) {
           )}
           {activeCard.type === "password" && (
             <div className="bg-slate-950/40 p-3 rounded-xl border border-white/20 flex items-center justify-between text-white text-xs">
-              <span className="flex items-center space-x-1 font-mono">
+              <div className="flex items-center space-x-2">
                 <Lock className="w-4 h-4 text-pink-400" />
-                <span>Secret code: {activeCard.options?.[0] ? "•".repeat(Math.min(activeCard.options[0].length, 10)) : "(not set)"}</span>
-              </span>
-              <span className="bg-pink-500/30 px-2 py-0.5 rounded text-[10px] font-bold">LOCKED</span>
+                <span className="font-mono">
+                  {activeCard.passcode ? `${"•".repeat(Math.min(activeCard.passcode.length, 10))}${activeCard.passcode.length > 10 ? "…" : ""}` : "(not set)"}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                {activeCard.passwordHint && (
+                  <span className="text-[10px] text-pink-300 max-w-[120px] truncate" title={activeCard.passwordHint}>
+                    {activeCard.passwordHint}
+                  </span>
+                )}
+                <span className="bg-pink-500/30 px-2 py-0.5 rounded text-[10px] font-bold">LOCKED</span>
+              </div>
             </div>
           )}
           {activeCard.type === "text" && (

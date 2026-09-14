@@ -77,6 +77,8 @@ export function normalizeDeck(deck) {
         type,
         question: c.question || c.title || "A fun question ✨",
         subtitle: c.subtitle || "",
+        passcode: c.passcode || "",
+        passwordHint: c.passwordHint || "",
         options: Array.isArray(c.options) ? c.options : [],
         mediaUrl: c.mediaUrl || "",
       };

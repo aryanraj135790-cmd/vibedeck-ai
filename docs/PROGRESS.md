@@ -1,7 +1,7 @@
 # VibeDeck AI — Progress Record
 
 > Source of truth: Master Plan v4.0 (`reference/VibeDeck AI - Master Plan, Feature Architecture & Business Strategy.docx`).
-> Last audited: 2026-09-15 · Branch `main` · Overall: **~68% complete**.
+> Last audited: 2026-09-15 · Branch `main` · Overall: **~69% complete**.
 
 ## Done (shipped on main)
 - Prompt-to-Deck via Gemini structured JSON (`src/services/aiService.js`, `AiBar.jsx`).
@@ -15,7 +15,7 @@
 - Web Audio synth SFX set: flip/tick/evasion/success/pop/fanfare/cyberbeep (`services/soundService.js`).
 - 5 themes + 3D tilt + particles (`data/themes.js`, `hooks/useTilt.js`).
 - WhatsApp/Telegram/SMS routing (`services/dispatchService.js`).
-- Social exporter 1200x630 + PNG download (`studio/SocialExporter.jsx`) — QR is placeholder.
+- Social exporter 1200x630 + PNG download (`studio/SocialExporter.jsx`) — real scannable QR (qrcode dep).
 - Local Saved Decks library: save/rename/duplicate/play/delete (`services/libraryService.js`, `studio/SavedDecks.jsx`).
 - lz-string `#deck=` share links + clipboard fallback + 60s banner (`services/shareService.js`).
 - Card-only share links: `encodeDeckToUrl` strips title/theme/sender/recipient/phone — only `cards[]` compressed; shared-link decode enters `"view"` tab (no Header); recipient gets chrome-free PlayView with tiny "Powered by VibeDeck AI" footer (`services/shareService.js`, `useApp.js`, `App.jsx`, `components/player/PlayView.jsx`).
@@ -26,7 +26,6 @@
 | Item | Gap | File |
 |---|---|---|
 | Voice note upload to deck | recorded blob lives in memory only; not persisted with deck | `InteractionBodies.jsx` |
-| Social QR | fake checker pattern, not scannable | `SocialExporter.jsx` |
 | Media finder | no Giphy/Tenor search, AI url + presets only | `aiService.js`, `MediaPicker.jsx` |
 | Deploy/PWA | no vercel config, manifest, or SW verified | repo root |
 
@@ -35,7 +34,7 @@
 - Custom BGM MP3 / voice upload; persist recorded audio with deck (backend).
 - Video loops, AI images, Tenor/Giphy search.
 - Custom backgrounds/fonts/particle selector.
-- Real QR in exporter; gift-card attach + affiliate.
+- Gift-card attach + affiliate.
 - Lazy auth (guest → modal → dashboard) + response history/analytics.
 - Backend persistence (Supabase/Firebase) + `/c/:id` short links (keep `#deck=` compat).
 - Monetization: watermark enforcement, $1.99 pass, $6.99 VIP, Stripe.
@@ -49,3 +48,4 @@
 - 2026-09-14: M1.2b Option B — dedicated passcode + passwordHint fields added (`PasswordEditor`, `StudioPreview` masked dots + LOCKED badge, `PasswordBody` reads new shape with options[0] fallback, aiService prompt+schema updated, normalize includes new fields); ~66%.
 - 2026-09-14: M1.2b Option B — dedicated passcode + passwordHint fields added (`PasswordEditor`, `StudioPreview` masked dots + LOCKED badge, `PasswordBody` reads new shape with options[0] fallback, aiService prompt+schema updated, normalize includes new fields); ~66%.
 - 2026-09-15: Card-only share links — only `cards[]` encoded in share URL; shared-link decode opens a chrome-free PlayView (no Header, no back link) with a tiny "Powered by VibeDeck AI" footer; `encodeDeckToUrl` strips all non-card fields before compressing; `useApp` shared-link decode now sets activeTab to `"view"` instead of `"preview"` (`services/shareService.js`, `src/hooks/useApp.js`, `src/App.jsx`, `src/components/player/PlayView.jsx`); ~68%.
+- 2026-09-15: Real QR in social card preview shipped via PR #8 (feature/real-qr → main, merge 81e785a); added `qrcode` dep; SocialExporter now draws scannable QR of the deck link (savedUrl with window.location.href fallback) on the 1200x630 PNG; removed duplicate QR import. Overall ~69%.

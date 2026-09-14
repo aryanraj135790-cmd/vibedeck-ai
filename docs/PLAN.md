@@ -5,7 +5,7 @@
 ## Milestone 1 — No-backend wins (do first)
 1. **Real voice recorder (S)** — `MediaRecorder` in `VoiceBody` (`InteractionBodies.jsx`): mic permission UX, record/stop/playback, attach audio blob ref; fallback to simulation on denial. Accept: record → playback → answer attaches "Voice Note".
 2. **Password/Lock card type (S)** — new `password` id in `buttonTypes.js` + `aiService` schema + `PasswordBody` (code input + clue + unlock); normalize legacy. Accept: locked card blocks advance until code matches.
-3. **Real QR in exporter (XS)** — draw scannable QR of deck link on the 1200x630 canvas (`SocialExporter.jsx`). Zero-dep approach: embed tiny QR draw routine; if too big, add `qrcode` dep (decision at build time). Accept: phone scans QR → opens deck.
+3. **Real QR in exporter (XS)** — draw scannable QR of deck link on the 1200x630 canvas (`SocialExporter.jsx`). Zero-dep approach: embed tiny QR draw routine; if too big, add `qrcode` dep (decision at build time). Accept: phone scans QR → opens deck. Decision recorded: used `qrcode` npm dep (not hand-rolled) — PR #8, commit 81e785a.
 4. **Tone switcher + chat tweak (M)** — reuse Gemini key: `rewriteDeck(deck, tone)` for 5 tones + one-line tweak prompt in Studio (`AiBar.jsx` extension, `aiService.js`). Accept: 1 click rewrites copy in chosen tone.
 5. **Media search lite (M)** — Tenor/Giphy search tab in `MediaPicker.jsx` (env key, debounce, pick-to-assign). Accept: search → thumbnail → assigned to card.
 
@@ -25,4 +25,4 @@
 ## Conventions
 - Update `docs/PROGRESS.md` each milestone: move items Done, add % + date + commit hash.
 - No TypeScript. Keep `useApp.js` as state owner; small components under `player/`, `studio/`, `chrome/`.
-- Open decisions: QR dep vs hand-rolled; Supabase vs Firebase; mic-permission UX copy.
+- Open decisions: Supabase vs Firebase; mic-permission UX copy.

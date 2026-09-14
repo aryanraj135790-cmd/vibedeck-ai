@@ -18,6 +18,8 @@ const deckSchema = {
           type: { type: Type.STRING, enum: BUTTON_TYPE_IDS },
           question: { type: Type.STRING },
           subtitle: { type: Type.STRING },
+          passcode: { type: Type.STRING },
+          passwordHint: { type: Type.STRING },
           options: {
             type: Type.ARRAY,
             items: { type: Type.STRING }
@@ -97,7 +99,7 @@ export async function generateDeckFromPrompt(userPrompt) {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
-      contents: `Generate a 3-4 card interactive deck for: "${userPrompt}". Mix the interaction types to feel fresh (e.g. runaway, options, slider, voice, text, next) and pick a theme that fits the vibe. Include a mediaUrl (a giphy gif url) on at least one card.`,
+      contents: `Generate a 3-5 card interactive deck for: "${userPrompt}". Mix the interaction types to feel fresh (e.g. runaway, options, slider, voice, text, password, next) and pick a theme that fits the vibe. Include a mediaUrl (a giphy gif url) on at least one card. For a "password" card: put the secret code in the dedicated "passcode" field (short, lowercase), put the hint/clue in "passwordHint" (or subtitle if you prefer). Do not put the passcode in options — options are for runaway/options choice chips only.`,
       config: {
         systemInstruction: "Return ONLY raw JSON matching the schema. No markdown formatting outside json, no chat text.",
         responseMimeType: 'application/json',

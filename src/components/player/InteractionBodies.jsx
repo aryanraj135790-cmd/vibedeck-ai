@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff, ArrowRight } from "lucide-react";
+import { Mic, MicOff, ArrowRight, Lock, Unlock } from "lucide-react";
 import { useRunawayButton } from "../../hooks/useRunawayButton";
 import { soundService } from "../../services/soundService";
 
@@ -244,5 +244,76 @@ export function NextBody({ onAnswer }) {
       <span>Proceed Next</span>
       <ArrowRight className="w-4 h-4" />
     </button>
+  );
+}
+
+export function PasswordBody({ card, onAnswer }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+
+  // New dedicated shape preferred; falls back to options[0] for legacy decks.
+  const passcode = String(card.passcode || card.options?.[0] || "").trim();
+  const hint = card.passwordHint || card.subtitle || "";
+
+  const attempt = () => {
+    // No passcode configured = card creator left it open; accept any entry.
+    if (!passcode || code.trim().toLowerCase() === passcode.toLowerCase()) {
+      setError(false);
+      setUnlocked(true);
+      soundService.playSuccess();
+      onAnswer(passcode ? "Unlocked with secret code" : "Unlocked");
+    } else {
+      setError(true);
+      soundService.playPop();
+    }
+  };
+
+  return (
+    <div className="bg-slate-950/50 backdrop-blur-md p-4 rounded-2xl border border-white/20 space-y-3 text-center">
+      {unlocked ? (
+        <div className="space-y-2">
+          <Unlock className="w-8 h-8 text-emerald-400 mx-auto" />
+          <p className="text-xs font-bold text-emerald-300">Unsealed! Moving on...</p>
+          <button
+            onClick={() => onAnswer("Unlocked with secret code")}
+            className="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs shadow-md"
+          >
+            Continue ➔
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Lock className={`w-8 h-8 mx-auto ${error ? "text-rose-400 animate-bounce" : "text-pink-400"}`} />
+          {hint && (
+            <p className="text-[11px] text-pink-200/80 italic">
+              {hint}
+            </p>
+          )}
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value);
+              setError(false);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && attempt()}
+            placeholder="Enter the secret code..."
+            maxLength={40}
+            className={`w-full bg-slate-950 border rounded-xl px-3 py-2 text-xs text-white text-center focus:outline-none ${
+              error ? "border-rose-500/70" : "border-white/20 focus:border-pink-500"
+            }`}
+          />
+          {error && <p className="text-[11px] text-rose-300">Wrong code — check the clue and try again.</p>}
+          <button
+            onClick={attempt}
+            disabled={!code.trim()}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white font-bold py-2 rounded-xl text-xs shadow-md"
+          >
+            Unlock
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

@@ -27,6 +27,11 @@ export const BUTTON_TYPES = [
     desc: "Open textbox response for notes or secret codes",
   },
   {
+    id: "password",
+    name: "Secret Password Box",
+    desc: "Locks the card until the recipient enters the secret code (first option = code)",
+  },
+  {
     id: "next",
     name: "Holo Wave / Next",
     desc: "Celebratory step forward with audio fanfare",

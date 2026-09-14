@@ -1,1 +1,71 @@
 @import "tailwindcss";
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  html,
+  body {
+    background: #020617;
+    overscroll-behavior-y: none;
+  }
+  body {
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  button,
+  [role="button"],
+  a[href],
+  input[type="range"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  [onclick],
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ec4899 0%, #8b5cf6 60%, #06b6d4 100%);
+    border-radius: 9999px;
+    border: 2px solid #020617;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #f472b6 0%, #a78bfa 60%, #22d3ee 100%);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .nice-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #ec4899 transparent;
+  }
+  .nice-scroll::-webkit-scrollbar {
+    height: 7px;
+    width: 7px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

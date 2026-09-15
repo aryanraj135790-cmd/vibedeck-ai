@@ -2,7 +2,6 @@ import { Header } from "./components/chrome/Header";
 import { Toast } from "./components/chrome/Toast";
 import { CanvasParticles, CanvasConfettiBurst } from "./components/chrome/Backdrop";
 import { AiBar } from "./components/studio/AiBar";
-import { AiRewriteBar } from "./components/studio/AiRewriteBar";
 import { DeckStudio } from "./components/studio/DeckStudio";
 import { SocialExporter } from "./components/studio/SocialExporter";
 import { SavedDecks } from "./components/studio/SavedDecks";
@@ -20,6 +19,8 @@ export default function App() {
     setPrompt,
     loading,
     rewriting,
+    activeTone,
+    suggestingCardId,
     saving,
     refreshKey,
     savedUrl,
@@ -37,6 +38,7 @@ export default function App() {
     handlePlaySaved,
     handleGenerate,
     handleRewrite,
+    handleSuggestCard,
   } = useApp();
 
   return (
@@ -59,13 +61,17 @@ export default function App() {
         {activeTab === "editor" && (
           <div className="flex flex-col gap-6 animate-[fadeIn_0.35s_ease]">
             <AiBar prompt={prompt} setPrompt={setPrompt} loading={loading} onGenerate={handleGenerate} />
-            <AiRewriteBar deck={deckWithTheme} rewriting={rewriting} onRewrite={handleRewrite} />
             <ShareLinkBanner savedUrl={savedUrl} onToast={showToast} />
             <DeckStudio
               deck={deckWithTheme}
               setDeck={setDeck}
               onToast={showToast}
               onPreview={() => handleTab("preview")}
+              rewriting={rewriting}
+              onRewrite={handleRewrite}
+              activeTone={activeTone}
+              suggestingCardId={suggestingCardId}
+              onSuggestCard={handleSuggestCard}
             />
           </div>
         )}

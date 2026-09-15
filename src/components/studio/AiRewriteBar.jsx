@@ -15,14 +15,17 @@ export function AiRewriteBar({ deck, rewriting, onRewrite }) {
   const [tone, setTone] = useState("playful");
   const [tweak, setTweak] = useState("");
 
-  return (
-    <div className="w-full bg-slate-900/70 border border-slate-800 rounded-3xl p-4 flex flex-col sm:flex-row gap-3 items-stretch">
-      <div className="flex-1 space-y-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-pink-300 uppercase tracking-wider">Rewrite</span>
-          <div className="h-px flex-1 bg-slate-800" />
-        </div>
+  const activeTone = tone || "playful";
+  const activeTweak = tweak || "";
 
+  return (
+    <section className="space-y-3 pb-5 border-b border-slate-800">
+      <label className="text-[11px] font-mono font-bold text-pink-400 uppercase tracking-widest flex items-center space-x-1">
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>2. Deck-Wide Voice & Tweak</span>
+      </label>
+
+      <div className="space-y-2.5">
         <div className="flex flex-wrap gap-1.5">
           {TONES.map((t) => {
             const Icon = t.icon;
@@ -32,7 +35,7 @@ export function AiRewriteBar({ deck, rewriting, onRewrite }) {
                 type="button"
                 onClick={() => setTone(t.id)}
                 className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition ${
-                  tone === t.id
+                  activeTone === t.id
                     ? "border-pink-400 bg-pink-500/15 text-pink-200 shadow-sm"
                     : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-slate-600"
                 }`}
@@ -55,8 +58,8 @@ export function AiRewriteBar({ deck, rewriting, onRewrite }) {
       <button
         type="button"
         disabled={rewriting || !hasCards}
-        onClick={() => onRewrite(deck, tone, tweak)}
-        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shrink-0"
+        onClick={() => onRewrite(deck, activeTone, activeTweak)}
+        className="w-full px-5 py-2.5 rounded-xl bg-linear-to-r from-pink-500 via-purple-600 to-cyan-500 text-xs font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       >
         {rewriting ? (
           <>
@@ -67,6 +70,6 @@ export function AiRewriteBar({ deck, rewriting, onRewrite }) {
           "Rewrite copy"
         )}
       </button>
-    </div>
+    </section>
   );
 }

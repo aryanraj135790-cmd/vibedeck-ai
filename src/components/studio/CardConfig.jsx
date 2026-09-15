@@ -2,6 +2,7 @@ import { BUTTON_TYPES } from "../../data/buttonTypes";
 import { MediaPicker } from "./MediaPicker";
 import { OptionsEditor } from "./OptionsEditor";
 import { ThemePicker } from "./ThemePicker";
+import { AiSparkleButton } from "./AiSparkleButton";
 
 function PasswordEditor({ activeCard, updateCurrentCard }) {
   const passcode = activeCard.passcode || "";
@@ -51,7 +52,16 @@ function PasswordEditor({ activeCard, updateCurrentCard }) {
   );
 }
 
-export function CardConfig({ activeCard, selectedCardIdx, updateCurrentCard, themeId, setDeck }) {
+export function CardConfig({
+  activeCard,
+  selectedCardIdx,
+  updateCurrentCard,
+  themeId,
+  setDeck,
+  activeTone,
+  suggestingCardId,
+  onSuggestCard,
+}) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -66,27 +76,49 @@ export function CardConfig({ activeCard, selectedCardIdx, updateCurrentCard, the
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
           Card Headline / Question
         </label>
-        <input
-          type="text"
-          value={activeCard.question || ""}
-          onChange={(e) => updateCurrentCard("question", e.target.value)}
-          placeholder="Ask something fun..."
-          maxLength={120}
-          className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 font-bold transition"
-        />
+        <div className="flex items-stretch gap-1">
+          <input
+            type="text"
+            value={activeCard.question || ""}
+            onChange={(e) => updateCurrentCard("question", e.target.value)}
+            placeholder="Ask something fun..."
+            maxLength={120}
+            className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 font-bold transition"
+          />
+          {activeTone && onSuggestCard && (
+            <AiSparkleButton
+              loading={suggestingCardId === activeCard.id}
+              disabled={!activeCard.id || !activeCard.question}
+              onClick={() => onSuggestCard(activeCard.id)}
+              title={`AI suggest this question in “${activeTone}” tone`}
+              tooltip="AI suggest question"
+            />
+          )}
+        </div>
       </div>
       <div>
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
           Subtext / Story Subtitle
         </label>
-        <textarea
-          rows={2}
-          value={activeCard.subtitle || ""}
-          onChange={(e) => updateCurrentCard("subtitle", e.target.value)}
-          placeholder="Add a playful subtext..."
-          maxLength={300}
-          className="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 resize-none transition"
-        />
+        <div className="flex items-stretch gap-1">
+          <textarea
+            rows={2}
+            value={activeCard.subtitle || ""}
+            onChange={(e) => updateCurrentCard("subtitle", e.target.value)}
+            placeholder="Add a playful subtext..."
+            maxLength={300}
+            className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 resize-none transition"
+          />
+          {activeTone && onSuggestCard && (
+            <AiSparkleButton
+              loading={suggestingCardId === activeCard.id}
+              disabled={!activeCard.id || !activeCard.subtitle}
+              onClick={() => onSuggestCard(activeCard.id)}
+              title={`AI suggest this subtitle in “${activeTone}” tone`}
+              tooltip="AI suggest subtitle"
+            />
+          )}
+        </div>
       </div>
       <MediaPicker
         value={activeCard.mediaUrl || ""}

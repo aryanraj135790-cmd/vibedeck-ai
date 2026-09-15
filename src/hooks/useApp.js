@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTheme } from "../data/themes";
 import { createDefaultDeck, normalizeDeck } from "../data/defaults";
-import { generateDeckFromPrompt } from "../services/aiService";
+import { generateDeckFromPrompt, rewriteDeckCopy, rewriteCardCopy } from "../services/aiService";
 import { shareService } from "../services/shareService";
 import { libraryService } from "../services/libraryService";
 import { soundService } from "../services/soundService";
@@ -17,6 +17,10 @@ export function useApp() {
   });
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rewriting, setRewriting] = useState(false);
+  const [activeTone, setActiveTone] = useState("playful");
+  const [activeTweak, setActiveTweak] = useState("");
+  const [suggestingCardId, setSuggestingCardId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [savedUrl, setSavedUrl] = useState("");
@@ -128,6 +132,71 @@ export function useApp() {
     },
     [prompt, loading, showToast]
   );
+
+  const handleRewrite = useCallback(
+    async (deck, tone, tweak) => {
+      if (rewriting) return;
+      setRewriting(true);
+      try {
+        const rewritten = await rewriteDeckCopy(deck, tone, tweak || "");
+        setDeck(rewritten);
+        setEnvelopeKey((k) => k + 1);
+        showToast(`Rewritten in ${tone} tone.`);
+      } catch (err) {
+        console.error("AI rewrite failed:", err);
+        showToast("AI rewrite failed — deck kept as is.");
+      } finally {
+        setRewriting(false);
+      }
+    },
+    [rewriting, setDeck, showToast]
+  );
+
+  const handleSuggestCard = useCallback(
+    async (cardId) => {
+      if (!deck || !deck.cards) return;
+      const card = deck.cards.find((c) => c.id === cardId);
+      if (!card) {
+        showToast("No card selected for AI suggest.");
+        return;
+      }
+      const payload = {
+        question: card.question || "",
+        subtitle: card.subtitle || "",
+        options: Array.isArray(card.options) ? card.options : [],
+      };
+      setSuggestingCardId(cardId);
+      try {
+        const result = await rewriteCardCopy(cardId, payload, activeTone, activeTweak || "");
+        if (result.ok) {
+          setDeck((prev) => ({
+            ...prev,
+            cards: prev.cards.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    question: result.card.question,
+                    subtitle: result.card.subtitle,
+                    options: result.card.options,
+                  }
+                : c
+            ),
+          }));
+          setEnvelopeKey((k) => k + 1);
+          showToast(`Suggest ready — card updated in ${activeTone} tone.`);
+        } else {
+          showToast("AI suggest failed — card kept as is.");
+        }
+      } catch (err) {
+        console.error("AI suggest failed:", err);
+        showToast("AI suggest failed — card kept as is.");
+      } finally {
+        setSuggestingCardId(null);
+      }
+    },
+    [deck, activeTone, activeTweak, setDeck, setEnvelopeKey, showToast]
+  );
+
   return {
     activeTab,
     deck,
@@ -136,6 +205,12 @@ export function useApp() {
     prompt,
     setPrompt,
     loading,
+    rewriting,
+    activeTone,
+    activeTweak,
+    suggestingCardId,
+    setActiveTone,
+    setActiveTweak,
     saving,
     refreshKey,
     savedUrl,
@@ -152,5 +227,7 @@ export function useApp() {
     handleLoadSaved,
     handlePlaySaved,
     handleGenerate,
+    handleRewrite,
+    handleSuggestCard,
   };
 }

@@ -18,6 +18,9 @@ export default function App() {
     prompt,
     setPrompt,
     loading,
+    rewriting,
+    activeTone,
+    suggestingCardId,
     saving,
     refreshKey,
     savedUrl,
@@ -34,6 +37,8 @@ export default function App() {
     handleLoadSaved,
     handlePlaySaved,
     handleGenerate,
+    handleRewrite,
+    handleSuggestCard,
   } = useApp();
 
   return (
@@ -62,6 +67,11 @@ export default function App() {
               setDeck={setDeck}
               onToast={showToast}
               onPreview={() => handleTab("preview")}
+              rewriting={rewriting}
+              onRewrite={handleRewrite}
+              activeTone={activeTone}
+              suggestingCardId={suggestingCardId}
+              onSuggestCard={handleSuggestCard}
             />
           </div>
         )}

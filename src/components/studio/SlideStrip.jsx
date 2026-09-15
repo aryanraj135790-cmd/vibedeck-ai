@@ -52,7 +52,7 @@ export function SlideStrip({ cards, selectedCardIdx, setSelectedCardIdx, setDeck
             onClick={() => setSelectedCardIdx(idx)}
             className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition flex items-center space-x-1.5 ${
               selectedCardIdx === idx
-                ? "bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 text-white shadow-lg"
+                ? "bg-linear-to-r from-pink-500 via-purple-600 to-cyan-500 text-white shadow-lg"
                 : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800"
             }`}
           >
